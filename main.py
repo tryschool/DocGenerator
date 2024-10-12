@@ -25,7 +25,7 @@ def load_odt_file(file_path):
         for image in images:
             image_url = image.getAttribute("href")
             if not image_url.startswith("http"):
-                # Correctly construct the image path using the Pictures directory
+                # Correctly construct the image path
                 image_url = os.path.abspath(os.path.join(os.path.dirname(file_path), "Pictures", os.path.basename(image_url)))
 
             if os.path.exists(image_url):  # Ensure the image exists
@@ -33,8 +33,8 @@ def load_odt_file(file_path):
             else:
                 print(f"Warning: Image not found at {image_url}")
 
-
     return text_content
+
 
 
 def process_placeholders(text, data):
@@ -71,15 +71,26 @@ def save_to_pdf(content, output_file):
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
-    # Add the HTML content to PDF
+    # Set font for the main text
     pdf.set_font("Arial", size=12)
-    
-    # Split the content by lines to maintain structure
+
+    # Split content into lines and add them to the PDF
     for line in content.split("<br/>"):
-        pdf.multi_cell(0, 10, line)  # Add line to PDF with wrapping
+        # Check if the line contains an image tag
+        if '<img ' in line:
+            # Extract the image URL from the <img> tag
+            start = line.find('src="') + 5
+            end = line.find('"', start)
+            img_url = line[start:end]
+            
+            if os.path.exists(img_url):
+                pdf.image(img_url, x=10, w=pdf.w - 20)  # Add the image with margins
+        else:
+            pdf.multi_cell(0, 10, line)  # Add line to PDF with wrapping
 
     pdf.output(output_file)
     print(f"PDF saved to {output_file}")
+
 
 
 def main():
